@@ -193,9 +193,27 @@ EOD;
   echo $html;
 }
 
-function getFullUrl() {
+// $_SERVER['HTTP_HOST'] is attacker-controlled (a request can send any Host header),
+// and getFullUrl()/getScriptUrl() are echoed straight into the page's JS in
+// display_html(). Rather than trusting it, map it onto our own known report host so a
+// spoofed Host header can't be reflected back into the response.
+function getReportHost() {
+  $allowedDomains = ['gellifique.co.uk', 'gellifique.eu'];
+  $defaultHost = 'reports.gellifique.co.uk';
 
-  //return "https://www.gellifique.co.uk/modules/custom_reporting/view.php";
+  $host = isset($_SERVER['HTTP_HOST']) ? strtolower($_SERVER['HTTP_HOST']) : '';
+  $host = preg_replace('/:\d+$/', '', $host); // strip a trailing :port
+
+  foreach ($allowedDomains as $domain) {
+    if ($host === $domain || $host === 'www.' . $domain || $host === 'reports.' . $domain) {
+      return 'reports.' . $domain;
+    }
+  }
+
+  return $defaultHost;
+}
+
+function getFullUrl() {
 
   // Check if the request is over HTTPS
   $isHttps = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
@@ -204,24 +222,22 @@ function getFullUrl() {
   $protocol = $isHttps ? 'https://' : 'http://';
 
   // Combine to create the full URL
-  $fullUrl = $protocol . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+  $fullUrl = $protocol . getReportHost() . $_SERVER['REQUEST_URI'];
 
   return $fullUrl;
 }
 
 function getScriptUrl() {
 
-    //return "https://www.gellifique.co.uk/modules/custom_reporting/view.php";
-  
     // Check if the request is over HTTPS
     $isHttps = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
-  
+
     // Determine the protocol
     $protocol = $isHttps ? 'https://' : 'http://';
-  
+
     // Combine to create the full URL
-    $fullUrl = $protocol . $_SERVER['HTTP_HOST'] . $_SERVER['PHP_SELF'];
-  
+    $fullUrl = $protocol . getReportHost() . $_SERVER['PHP_SELF'];
+
     return $fullUrl;
   }
   
