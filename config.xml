@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<module>
+    <name>custom_reporting</name>
+    <displayName><![CDATA[Custom Reporting]]></displayName>
+    <version><![CDATA[0.0.1]]></version>
+    <description><![CDATA[Custom Reporting module ]]></description>
+    <author><![CDATA[Vallka]]></author>
+    <tab><![CDATA[administration]]></tab>
+	<confirmUninstall><![CDATA[]]></confirmUninstall>
+    <is_configurable>1</is_configurable>
+    <need_instance>0</need_instance>
+	<limited_countries></limited_countries>
+</module>
