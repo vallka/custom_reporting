@@ -10,8 +10,27 @@
 ini_set('error_reporting', E_ALL);
 ini_set('display_errors', 1);
 
+// PrestaShop's Shop::initialize() (triggered by config.inc.php below) redirects
+// and exit()s for any Host header that isn't a registered shop URL in ps_shop_url.
+// reports.gellifique.co.uk exists as its own vhost/SSL cert specifically to bypass
+// Cloudflare's Bot Fight Mode (which otherwise blocks Google Sheets' IMPORTDATA
+// from reaching this script's CSV/JSON output), but it's deliberately NOT
+// registered as a shop URL: PS_CANONICAL_REDIRECT still redirects a *registered but
+// non-main* URL to the main one, so registering it wouldn't help either. Instead,
+// present the known/registered domain to PrestaShop's own bootstrap so it skips
+// the redirect, then restore the real Host straight after for our own URL-building
+// (getReportHost() below) to use. Verified against a live redirect 2026-09-13.
+$_customReportingRealHost = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
+$_customReportingKnownHosts = [
+  'reports.gellifique.co.uk' => 'www.gellifique.co.uk',
+];
+if (isset($_customReportingKnownHosts[$_customReportingRealHost])) {
+  $_SERVER['HTTP_HOST'] = $_customReportingKnownHosts[$_customReportingRealHost];
+}
 
 include(dirname(__FILE__) . '/../../config/config.inc.php');
+
+$_SERVER['HTTP_HOST'] = $_customReportingRealHost;
 
 PrestaShopLogger::addLog('custom_reporting view.php');  
 
