@@ -63,6 +63,10 @@ class Custom_reporting extends Module
     {
         Configuration::updateValue('CUSTOM_REPORTING_TOKEN', md5(Tools::getShopDomainSsl().time()));
 
+        if (defined('_PS_ADMIN_DIR_')) {
+            Configuration::updateValue('CUSTOM_REPORTING_ADMIN_DIR', basename(_PS_ADMIN_DIR_));
+        }
+
         include(dirname(__FILE__).'/sql/install.php');
 
         return parent::install() &&
@@ -151,6 +155,14 @@ class Custom_reporting extends Module
                         'name' => 'CUSTOM_REPORTING_TOKEN',
                         'label' => $this->l('Token'),
                     ),
+                    array(
+                        'col' => 3,
+                        'type' => 'text',
+                        'prefix' => '<i class="icon icon-lock"></i>',
+                        'desc' => $this->l('The renamed admin folder (e.g. adminXXXXXXXXXX), used to build back-office links in report output. Update this if the admin folder is ever renamed.'),
+                        'name' => 'CUSTOM_REPORTING_ADMIN_DIR',
+                        'label' => $this->l('Admin folder name'),
+                    ),
                 ),
                 'submit' => array(
                     'title' => $this->l('Save'),
@@ -167,6 +179,7 @@ class Custom_reporting extends Module
         return array(
             'CUSTOM_REPORTING_ACCOUNT_EMAIL' => Configuration::get('CUSTOM_REPORTING_ACCOUNT_EMAIL', 'contact@prestashop.com'),
             'CUSTOM_REPORTING_TOKEN' => Configuration::get('CUSTOM_REPORTING_TOKEN', md5(Tools::getShopDomainSsl().time())),
+            'CUSTOM_REPORTING_ADMIN_DIR' => Configuration::get('CUSTOM_REPORTING_ADMIN_DIR', defined('_PS_ADMIN_DIR_') ? basename(_PS_ADMIN_DIR_) : ''),
         );
     }
 

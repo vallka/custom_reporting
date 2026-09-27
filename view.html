@@ -92,9 +92,9 @@ const app = Vue.createApp({
             filters: {},
             // mapping of column -> URL template
             data_links: {
-                id_order: 'https://www.gellifique.co.uk/admin734r04xdw/index.php/sell/orders/{id_order}/view?token={$token}&_token={$_token}',
-                id_product: 'https://www.gellifique.co.uk/admin734r04xdw/index.php/sell/catalog/products/{id_product}?token={$token}&_token={$_token}',
-                id_customer: 'https://www.gellifique.co.uk/admin734r04xdw/index.php/sell/customers/{id_customer}/view?token={$token}&_token={$_token}'
+                id_order: '{$adminUrl}/index.php/sell/orders/{id_order}/view?token={$token}&_token={$_token}',
+                id_product: '{$adminUrl}/index.php/sell/catalog/products/{id_product}?token={$token}&_token={$_token}',
+                id_customer: '{$adminUrl}/index.php/sell/customers/{id_customer}/view?token={$token}&_token={$_token}'
             }
         };
     },
@@ -200,7 +200,7 @@ const app = Vue.createApp({
 
             // 2) existing special column for product view
             if (column_name === 'name-link') {
-                return `<a href="https://www.gellifique.co.uk/modules/custom_reporting/view.php?id=${row['id']}&token={$token}&_token={$_token}" target="_blank" onclick="event.stopPropagation()">${row['name-link']}</a>`;
+                return `<a href="{$scriptUrl}?id=${row['id']}&token={$token}&_token={$_token}" target="_blank" onclick="event.stopPropagation()">${row['name-link']}</a>`;
             }
 
             // 3) existing 'link-*' columns

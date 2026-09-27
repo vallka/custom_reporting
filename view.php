@@ -100,6 +100,7 @@ function custom_reporting_main() {
 function display_html($name,$token,$_token) {
   $fullUrl = getFullUrl();
   $scriptUrl = getScriptUrl();
+  $adminUrl = getAdminUrl();
 
   $viewFile = dirname(__FILE__) . '/view.html';
 
@@ -110,13 +111,14 @@ function display_html($name,$token,$_token) {
 
     // Prepare safe replacements for the placeholders used in the template
     $escapedName = htmlspecialchars($name, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-    // fullUrl is used inside a JS single-quoted string in the template, escape single quotes
+    // fullUrl/adminUrl are used inside JS single-quoted strings in the template, escape single quotes
     $escapedFullUrl = str_replace("'", "\\'", $fullUrl);
     $escapedScriptUrl = htmlspecialchars($scriptUrl, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $escapedAdminUrl = str_replace("'", "\\'", $adminUrl);
 
     $html = str_replace(
-      ['{$name}', '{$fullUrl}', '{$scriptUrl}', '{$token}', '{$_token}'],
-      [$escapedName, $escapedFullUrl, $escapedScriptUrl,$token,  $_token],
+      ['{$name}', '{$fullUrl}', '{$scriptUrl}', '{$adminUrl}', '{$token}', '{$_token}'],
+      [$escapedName, $escapedFullUrl, $escapedScriptUrl, $escapedAdminUrl, $token,  $_token],
       $html
     );
   }
@@ -244,5 +246,21 @@ function getScriptUrl() {
 
     return $fullUrl;
   }
-  
+
+// The admin folder is renamed for security (e.g. admin734r04xdw) and differs
+// per site, so it's a module setting (Modules > Custom Reporting) rather than
+// hardcoded here - update it there if the folder is ever renamed. Falls back
+// to auto-detecting the current folder name if the setting is still empty.
+function getAdminUrl() {
+  $isHttps = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on';
+  $protocol = $isHttps ? 'https://' : 'http://';
+
+  $adminDir = trim((string) Configuration::get('CUSTOM_REPORTING_ADMIN_DIR'), '/');
+  if ($adminDir === '') {
+    $adminDir = defined('_PS_ADMIN_DIR_') ? basename(_PS_ADMIN_DIR_) : 'admin';
+  }
+
+  return $protocol . getReportHost() . '/' . $adminDir;
+}
+
 custom_reporting_main();
