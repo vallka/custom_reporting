@@ -10,29 +10,14 @@
 ini_set('error_reporting', E_ALL);
 ini_set('display_errors', 1);
 
-// PrestaShop's Shop::initialize() (triggered by config.inc.php below) redirects
-// and exit()s for any Host header that isn't a registered shop URL in ps_shop_url.
-// reports.gellifique.co.uk exists as its own vhost/SSL cert specifically to bypass
-// Cloudflare's Bot Fight Mode (which otherwise blocks Google Sheets' IMPORTDATA
-// from reaching this script's CSV/JSON output), but it's deliberately NOT
-// registered as a shop URL: PS_CANONICAL_REDIRECT still redirects a *registered but
-// non-main* URL to the main one, so registering it wouldn't help either. Instead,
-// present the known/registered domain to PrestaShop's own bootstrap so it skips
-// the redirect, then restore the real Host straight after for our own URL-building
-// (getReportHost() below) to use. Verified against a live redirect 2026-09-13.
-$_customReportingRealHost = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '';
-$_customReportingKnownHosts = [
-  'reports.gellifique.co.uk' => 'www.gellifique.co.uk',
-];
-if (isset($_customReportingKnownHosts[$_customReportingRealHost])) {
-  $_SERVER['HTTP_HOST'] = $_customReportingKnownHosts[$_customReportingRealHost];
-}
-
+// A reports.gellifique.co.uk vhost was tried so this endpoint could be DNS-only
+// (bypassing Cloudflare's Bot Fight Mode, which blocks Google Sheets' IMPORTDATA)
+// while www. stayed proxied. That needs PrestaShop's Shop::initialize() bootstrap
+// (below) to not redirect an unregistered/non-main Host — abandoned as
+// impractical; see project memory ("reports subdomain fix") if reviving it.
 include(dirname(__FILE__) . '/../../config/config.inc.php');
 
-$_SERVER['HTTP_HOST'] = $_customReportingRealHost;
-
-PrestaShopLogger::addLog('custom_reporting view.php');  
+PrestaShopLogger::addLog('custom_reporting view.php');
 
 $db = \Db::getInstance();
 $_DB_PREFIX_ = _DB_PREFIX_;
@@ -214,18 +199,18 @@ EOD;
 
 // $_SERVER['HTTP_HOST'] is attacker-controlled (a request can send any Host header),
 // and getFullUrl()/getScriptUrl() are echoed straight into the page's JS in
-// display_html(). Rather than trusting it, map it onto our own known report host so a
-// spoofed Host header can't be reflected back into the response.
+// display_html(). Validate it against known domains instead of trusting it
+// outright, so a spoofed Host header can't be reflected back into the response.
 function getReportHost() {
   $allowedDomains = ['gellifique.co.uk', 'gellifique.eu'];
-  $defaultHost = 'reports.gellifique.co.uk';
+  $defaultHost = 'www.gellifique.co.uk';
 
   $host = isset($_SERVER['HTTP_HOST']) ? strtolower($_SERVER['HTTP_HOST']) : '';
   $host = preg_replace('/:\d+$/', '', $host); // strip a trailing :port
 
   foreach ($allowedDomains as $domain) {
     if ($host === $domain || $host === 'www.' . $domain || $host === 'reports.' . $domain) {
-      return 'reports.' . $domain;
+      return $host;
     }
   }
 
